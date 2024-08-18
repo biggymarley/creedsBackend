@@ -24,7 +24,7 @@ app.get("/api/", (req, res) => {
 
 app.post("/api/create-promo", async (req, res) => {
   try {
-    const { amount_off, code, userEmail } = req.body;
+    const { amount_off, userEmail } = req.body;
 
     // 1. Check if the customer already exists in Stripe
     const customers = await stripe.customers.list({
@@ -55,7 +55,7 @@ app.post("/api/create-promo", async (req, res) => {
     // 4. Create a Promotion Code from the Coupon and associate it with the customer
     const promotionCode = await stripe.promotionCodes.create({
       coupon: coupon.id,
-      code: code, // Optional: Provide a custom code, or omit to auto-generate
+      // code: code, // Optional: Provide a custom code, or omit to auto-generate
       customer: customerId, // Associate the promotion code with the customer
     });
 
