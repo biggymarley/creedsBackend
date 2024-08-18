@@ -12,9 +12,7 @@ app.use(express.json());
 
 // Replace if using a different env file or config
 
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2022-08-01",
-});
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 
 app.get("/api/", (req, res) => {
