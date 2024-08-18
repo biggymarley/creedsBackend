@@ -7,7 +7,7 @@ const corsOptions = {
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-app.use(cors(corsOptions));
+app.use(cors());
 app.use(express.json());
 
 // Replace if using a different env file or config
