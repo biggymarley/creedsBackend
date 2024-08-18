@@ -21,7 +21,45 @@ app.get("/api/", (req, res) => {
   res.send("path");
 });
 
+app.post("/api/userSession",async (req, res) => {
+  try {
+    const { userEmail } = req.body;
+    const customers = await stripe.customers.list({
+      email: userEmail,
+      limit: 1,
+    });
 
+    let customerId;
+
+    if (customers.data.length > 0) {
+      // Customer already exists
+      customerId = customers.data[0].id;
+    } else {
+      // 2. Create a new customer if not already present
+      const customer = await stripe.customers.create({
+        email: userEmail,
+      });
+      customerId = customer.id;
+    }
+    // 1. Check if the customer already exists in Stripe
+    const customerSession = await stripe.customerSessions.create({
+      customer: customerId,
+      components: {
+        pricing_table: {
+          enabled: true,
+        },
+      },
+    });
+    // Send back the promotion code details
+    res.status(200).json({
+      success: true,
+      customerSession: customerSession,
+    });
+  } catch (error) {
+    console.error("Error creating customerSession:", error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+})
 app.post("/api/create-promo", async (req, res) => {
   try {
     const { amount_off, userEmail } = req.body;
