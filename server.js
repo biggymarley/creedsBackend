@@ -41,7 +41,6 @@ app.post("/api/userSession",async (req, res) => {
       });
       customerId = customer.id;
     }
-    // 1. Check if the customer already exists in Stripe
     const customerSession = await stripe.customerSessions.create({
       customer: customerId,
       components: {
