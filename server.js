@@ -39,6 +39,7 @@ app.post("/api/userSession",async (req, res) => {
       });
       customerId = customer.id;
     }
+    console.log(stripe.customerSessions)
     const customerSession = await stripe.customerSessions.create({
       customer: customerId,
       components: {
