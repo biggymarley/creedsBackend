@@ -24,25 +24,44 @@ app.get("/api/", (req, res) => {
 
 app.post("/api/create-promo", async (req, res) => {
   try {
-    const { amount_off, currency, code } = req.body;
+    const { amount_off, code, userEmail } = req.body;
 
-    // 1. Create a Coupon
+    // 1. Check if the customer already exists in Stripe
+    const customers = await stripe.customers.list({
+      email: userEmail,
+      limit: 1,
+    });
+
+    let customerId;
+
+    if (customers.data.length > 0) {
+      // Customer already exists
+      customerId = customers.data[0].id;
+    } else {
+      // 2. Create a new customer if not already present
+      const customer = await stripe.customers.create({
+        email: userEmail,
+      });
+      customerId = customer.id;
+    }
+
+    // 3. Create a Coupon
     const coupon = await stripe.coupons.create({
       amount_off: amount_off,
       currency: "USD",
       duration: "once", // Can be "forever", "once", or "repeating"
     });
 
-    // 2. Create a Promotion Code from the Coupon
+    // 4. Create a Promotion Code from the Coupon and associate it with the customer
     const promotionCode = await stripe.promotionCodes.create({
       coupon: coupon.id,
       code: code, // Optional: Provide a custom code, or omit to auto-generate
+      customer: customerId, // Associate the promotion code with the customer
     });
 
     // Send back the promotion code details
     res.status(200).json({
       success: true,
-      coupon: coupon,
       promotionCode: promotionCode,
     });
   } catch (error) {
@@ -50,6 +69,7 @@ app.post("/api/create-promo", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
+
 
 app.listen(5252, () =>
   console.log(`Node server listening at http://localhost:5252`)
