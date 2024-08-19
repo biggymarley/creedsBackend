@@ -39,19 +39,18 @@ app.post("/api/userSession",async (req, res) => {
       });
       customerId = customer.id;
     }
-    console.log(stripe)
-    // const customerSession = await stripe.customer_sessions.create({
-    //   customer: customerId,
-    //   components: {
-    //     pricing_table: {
-    //       enabled: true,
-    //     },
-    //   },
-    // });
+    const customerSession = await stripe.customerSessions.create({
+      customer: customerId,
+      components: {
+        pricing_table: {
+          enabled: true,
+        },
+      },
+    });
     // Send back the promotion code details
     res.status(200).json({
       success: true,
-      // customerSession: customerSession,
+      customerSession: customerSession,
     });
   } catch (error) {
     console.error("Error creating customerSession:", error);
