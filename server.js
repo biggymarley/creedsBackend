@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const cron = require('node-cron');
+const { default: axios } = require("axios");
 const corsOptions = {
   origin: process.env.ORIGIN,
 };
