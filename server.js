@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
+const cron = require('node-cron');
 const corsOptions = {
   origin: process.env.ORIGIN,
 };
@@ -33,7 +34,7 @@ app.post("/api/userSession",async (req, res) => {
       // Customer already exists
       customerId = customers.data[0].id;
     } else {
-      // 2. Create a new customer if not already present
+      //  Create a new customer if not already present
       const customer = await stripe.customers.create({
         email: userEmail,
       });
@@ -106,6 +107,119 @@ app.post("/api/create-promo", async (req, res) => {
 });
 
 
+
+
+async function applyDiscountBasedOnPoints(user) {
+  try {
+      const upcomingInvoice = await getUpcomingInvoice(user.stripeCustomerId);
+
+      if (upcomingInvoice) {
+          const points = user.points;
+          if (points > 0) {
+              const discountAmount = points * 100; // Convert points to cents (10 points = $10)
+
+              // Create a new promo code or apply the discount directly
+              const coupon = await stripe.coupons.create({
+                  amount_off: discountAmount,
+                  currency: 'usd',
+              });
+
+              // Apply the coupon to the upcoming invoice
+              await stripe.invoices.update(upcomingInvoice.id, {
+                  discounts: [{ coupon: coupon.id }],
+              });
+
+              // Optionally, reduce the user's points after applying the discount
+              await reduceUserPoints(user.id, points);
+          }
+      }
+  } catch (error) {
+      console.error(`Failed to apply discount for user ${user.id}: ${error.message}`);
+  }
+}
+
+// Function to get upcoming invoice for a user
+async function getUpcomingInvoice(customerId) {
+  const invoices = await stripe.invoices.list({
+      customer: customerId,
+      status: 'open',
+  });
+  return invoices.data[0] || null;
+}
+
+// Function to reduce user points
+async function reduceUserPoints(userId, points) {
+  // Implement your database logic to reduce points
+  console.log(`Reducing ${points} points for user ${userId}`);
+}
+
+cron.schedule('0 0 * * *', async () => {
+  console.log('Running daily check for subscriptions with points');
+
+  // Fetch users with active subscriptions and points from your database
+  const users = await getUsersWithActiveSubscriptionsAndPoints();
+  console.log(users)
+
+  // for (const user of users) {
+  //     await applyDiscountBasedOnPoints(user);
+  // }
+});
+
+
+async function getAccessToken() {
+  try {
+      const response = await axios.post('https://xlyq-uzsi-spoj.n7d.xano.io/api:wcke9BSb/auth/login', {
+          email: 'your_email', // Replace with your Xano account email
+          password: 'your_password', // Replace with your Xano account password
+      });
+      return response.data.authToken; // Adjust based on the actual response structure
+  } catch (error) {
+      console.error('Error fetching Xano access token:', error);
+      throw new Error('Failed to get access token');
+  }
+}
+
+// Function to fetch users with active subscriptions and points
+async function getUsersWithActiveSubscriptionsAndPoints() {
+  try {
+      // Step 1: Get access token
+      const accessToken = await getAccessToken();
+
+      // Step 2: Fetch users with points from Xano API
+      const response = await axios.get('https://xlyq-uzsi-spoj.n7d.xano.io/api:wcke9BSb/users_with_points', {
+          headers: {
+              Authorization: `Bearer ${accessToken}`, // Send the access token in the Authorization header
+          },
+      });
+      const usersWithPoints = response.data;
+
+      const usersWithActiveSubscriptions = [];
+
+      for (const user of usersWithPoints) {
+          if (user.stripeCustomerId) {
+              // Fetch subscriptions for the user from Stripe
+              const subscriptions = await stripe.subscriptions.list({
+                  customer: user.stripeCustomerId,
+                  status: 'active',
+              });
+
+              // Check if the user has any active subscriptions
+              if (subscriptions.data.length > 0) {
+                  usersWithActiveSubscriptions.push({
+                      id: user.id,
+                      stripeCustomerId: user.stripeCustomerId,
+                      points: user.points,
+                  });
+              }
+          }
+      }
+
+      return usersWithActiveSubscriptions;
+  } catch (error) {
+      console.error('Error fetching users with active subscriptions and points:', error);
+      return [];
+  }
+}
 app.listen(5252, () =>
   console.log(`Node server listening at http://localhost:5252`)
 );
