@@ -102,7 +102,7 @@ app.post("/api/create-promo", async (req, res) => {
   }
 });
 
-cron.schedule("* * * * *", async () => {
+cron.schedule("*/30 * * * *", async () => {
   console.log("Running daily check for subscriptions with points");
 
   // Fetch users with active subscriptions and points from your database
