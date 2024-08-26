@@ -15,7 +15,9 @@ app.use(cors());
 app.use(express.json());
 
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
-
+app.get("/api/ping", function (req, res) {
+  res.status(200).json({ message: "pong" });
+});
 app.post("/api/userSession", async (req, res) => {
   try {
     const { userEmail } = req.body;
@@ -102,7 +104,7 @@ app.post("/api/create-promo", async (req, res) => {
   }
 });
 
-cron.schedule("*/12 * * * *", async () => {
+cron.schedule("* * * * *", async () => {
   console.log("Running daily check for subscriptions with points");
 
   // Fetch users with active subscriptions and points from your database
