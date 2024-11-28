@@ -181,6 +181,7 @@ async function searchTable(tableName, query) {
         return {
           id: record.id,
           name: record.get('Name'),
+          access: record.get('Access'),
           table: tableName,
           url: `https://www.creedscodex.com/${tablePath}/${record.get('path')}`,
         };
