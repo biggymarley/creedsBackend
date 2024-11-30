@@ -139,7 +139,7 @@ async function searchTable(tableName, query) {
       .select({
         // Selecting the first 3 records in Grid view:
         maxRecords: 10,
-        // view: "Grid view",
+        view: "Synced (Do not filter)",
         filterByFormula: `FIND(LOWER("${query}"), LOWER({Name}))`,
       })
       .firstPage();
