@@ -1,12 +1,14 @@
 const express = require("express");
-const Airtable = require('airtable');
+const Airtable = require("airtable");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const cron = require("node-cron");
 const getUsersWithActiveSubscriptionsAndPoints = require("./getUsersWithActiveSubscriptionsAndPoints");
 const applyDiscountBasedOnPoints = require("./applyDiscountBasedOnPoints");
 require("dotenv").config();
-const base = new Airtable({ apiKey: process.env.AIRTABLE_API_KEY }).base(process.env.AIRTABLE_BASE_ID);
+const base = new Airtable({ apiKey: process.env.AIRTABLE_API_KEY }).base(
+  process.env.AIRTABLE_BASE_ID
+);
 const corsOptions = {
   origin: process.env.ORIGIN,
 };
@@ -17,11 +19,9 @@ app.use(cors());
 app.use(express.json());
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
-
 app.get("/api/ping", function (req, res) {
   res.status(200).json({ message: "pong" });
 });
-
 
 app.post("/api/userSession", async (req, res) => {
   try {
@@ -61,7 +61,6 @@ app.post("/api/userSession", async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 });
-
 
 app.post("/api/create-promo", async (req, res) => {
   try {
@@ -111,20 +110,22 @@ app.post("/api/create-promo", async (req, res) => {
   }
 });
 
-app.get('/api/search', async (req, res) => {
+app.get("/api/search", async (req, res) => {
   const { query } = req.query;
-  
+
   // Search across multiple tables
   const searchResults = await Promise.all([
-    searchTable('Class', query),
-    searchTable('Spells', query),
-    searchTable('Feats', query),
-    searchTable('Path', query),
-    searchTable('Magic Items', query),
-    searchTable('Equipment', query),
-    searchTable('Monsters', query),
-    searchTable('Backgrounds', query),
-    searchTable('Subclass', query),
+    searchTable("Class", query),
+    searchTable("Spells", query),
+    searchTable("Feats", query),
+    searchTable("Path", query),
+    searchTable("Magic Items", query),
+    searchTable("Equipment", query),
+    searchTable("Monsters", query),
+    searchTable("Backgrounds", query),
+    searchTable("Subclass", query),
+    searchTable("Species", query),
+    //species
   ]);
 
   // Flatten and combine the results
@@ -144,54 +145,56 @@ async function searchTable(tableName, query) {
       })
       .firstPage();
 
-      return records.map((record) => {
-        let tablePath;
-        switch (tableName) {
-          case 'Class':
-            tablePath = 'classdetails';
-            break;
-          case 'Spells':
-            tablePath = 'spellsdetails';
-            break;
-          case 'Feats':
-            tablePath = 'featdetails';
-            break;
-          case 'Path':
-            tablePath = 'featpathdetails';
-            break;
-          case 'Magic Items':
-            tablePath = 'magicitemdetails';
-            break;
-          case 'Equipment':
-            tablePath = 'equipmentdetails';
-            break;
-          case 'Monsters':
-            tablePath = 'monsterdetails';
-            break;
-          case 'Backgrounds':
-            tablePath = 'backgrounddetails';
-            break;
-          case 'Subclass':
-            tablePath = 'subclassdetails';
-            break;
-          default:
-            tablePath = '';
-        }
-  
-        return {
-          id: record.id,
-          name: record.get('Name'),
-          access: record.get('Access'),
-          table: tableName,
-          url: `https://www.creedscodex.com/${tablePath}/${record.get('path')}`,
-        };
-      });
+    return records.map((record) => {
+      let tablePath;
+      switch (tableName) {
+        case "Class":
+          tablePath = "classdetails";
+          break;
+        case "Spells":
+          tablePath = "spellsdetails";
+          break;
+        case "Feats":
+          tablePath = "featdetails";
+          break;
+        case "Path":
+          tablePath = "featpathdetails";
+          break;
+        case "Magic Items":
+          tablePath = "magicitemdetails";
+          break;
+        case "Equipment":
+          tablePath = "equipmentdetails";
+          break;
+        case "Species":
+          tablePath = "speciesdetails";
+          break;
+        case "Monsters":
+          tablePath = "monsterdetails";
+          break;
+        case "Backgrounds":
+          tablePath = "backgrounddetails";
+          break;
+        case "Subclass":
+          tablePath = "subclassdetails";
+          break;
+        default:
+          tablePath = "";
+      }
+
+      return {
+        id: record.id,
+        name: record.get("Name"),
+        access: record.get("Access"),
+        table: tableName,
+        url: `https://www.creedscodex.com/${tablePath}/${record.get("path")}`,
+      };
+    });
   } catch (err) {
     console.error(`Error searching table "${tableName}":`, err);
     return [];
   }
 }
-
 
 cron.schedule("* * * * *", async () => {
   console.log("Running daily check for subscriptions with points");
