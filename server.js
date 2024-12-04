@@ -196,16 +196,16 @@ async function searchTable(tableName, query) {
   }
 }
 
-cron.schedule("* * * * *", async () => {
-  console.log("Running daily check for subscriptions with points");
+// cron.schedule("* * * * *", async () => {
+//   console.log("Running daily check for subscriptions with points");
 
-  // Fetch users with active subscriptions and points from your database
-  const users = await getUsersWithActiveSubscriptionsAndPoints(stripe);
-  console.log(users);
-  for (const user of users) {
-    await applyDiscountBasedOnPoints(user, stripe);
-  }
-});
+//   // Fetch users with active subscriptions and points from your database
+//   const users = await getUsersWithActiveSubscriptionsAndPoints(stripe);
+//   console.log(users);
+//   for (const user of users) {
+//     await applyDiscountBasedOnPoints(user, stripe);
+//   }
+// });
 app.listen(5252, () =>
   console.log(`Node server listening at http://localhost:5252`)
 );
