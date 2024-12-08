@@ -82,6 +82,7 @@ class MagicShop {
           const scrollItem = {
             name: `Spell Scroll of ${spell.get('Name')}`,
             type: 'Spell Scroll',
+            path: spell.get('path'),
             rarity: rarity,
             price: this.generateRandomPrice(rarity),
             attunement: false
@@ -96,6 +97,7 @@ class MagicShop {
             selectedItems.push({
               name: item.get('Name'),
               type: item.get('Type'),
+              path: item.get('path'),
               rarity: item.get('Rarity').toLowerCase(),
               price: item.get('Price') || this.generateRandomPrice(rarity),
               attunement: item.get('Attunement') || false
@@ -106,6 +108,8 @@ class MagicShop {
             const scrollItem = {
               name: `Spell Scroll of ${spell.get('Name')}`,
               type: 'Spell Scroll',
+              path: spell.get('path'),
+
               rarity: rarity,
               price: this.generateRandomPrice(rarity),
               attunement: false
@@ -126,6 +130,8 @@ class MagicShop {
         selectedItems.push({
           name: `Spell Scroll of ${spell.get('Name')}`,
           type: 'Spell Scroll',
+          path: spell.get('path'),
+
           rarity: 'common',
           price: this.generateRandomPrice('common'),
           attunement: false
