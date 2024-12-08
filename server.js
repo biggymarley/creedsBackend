@@ -5,6 +5,7 @@ const bodyParser = require("body-parser");
 const cron = require("node-cron");
 const getUsersWithActiveSubscriptionsAndPoints = require("./getUsersWithActiveSubscriptionsAndPoints");
 const applyDiscountBasedOnPoints = require("./applyDiscountBasedOnPoints");
+const MagicShop = require("./magicShop");
 require("dotenv").config();
 const base = new Airtable({ apiKey: process.env.AIRTABLE_API_KEY }).base(
   process.env.AIRTABLE_BASE_ID
@@ -17,6 +18,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cors());
 app.use(express.json());
+const magicShop = new MagicShop(base);
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 app.get("/api/ping", function (req, res) {
@@ -195,17 +197,47 @@ async function searchTable(tableName, query) {
     return [];
   }
 }
+app.get("/api/magic-shop", async (req, res) => {
+  try {
+    if (!magicShop.currentInventory) {
+      await magicShop.refreshShop();
+    }
 
+    const timeUntilRefresh = magicShop.getTimeUntilRefresh();
+
+    res.json({
+      shopName: magicShop.shopName,
+      inventory: magicShop.currentInventory,
+      timeUntilRefresh,
+      nextRefresh: magicShop.nextRefresh,
+    });
+  } catch (error) {
+    console.error("Error fetching magic shop inventory:", error);
+    res.status(500).json({ error: "Failed to fetch magic shop inventory" });
+  }
+});
 cron.schedule("0 0 * * *", async () => {
   console.log("Running daily check for subscriptions with points");
 
   // Fetch users with active subscriptions and points from your database
   const users = await getUsersWithActiveSubscriptionsAndPoints(stripe);
-  console.log(users);
   for (const user of users) {
     await applyDiscountBasedOnPoints(user, stripe);
   }
 });
+
+cron.schedule(
+  "0 0 * * *",
+  async () => {
+    console.log("Refreshing magic shop inventory");
+    await magicShop.refreshShop();
+  },
+  {
+    scheduled: true,
+    timezone: "America/Los_Angeles",
+  }
+);
+
 app.listen(5252, () =>
   console.log(`Node server listening at http://localhost:5252`)
 );
