@@ -271,45 +271,37 @@ class MagicShop {
     return "common";
   }
   getTimeUntilRefresh() {
-    // Create dates in Pacific Time
-    const now = new Date().toLocaleString("en-US", {
-      timeZone: "America/Los_Angeles",
-    });
-    const currentPacific = new Date(now);
-
-    // Calculate next midnight Pacific time
-    const midnightPacific = new Date(now);
-    midnightPacific.setHours(24, 0, 0, 0);
-
-    // Calculate time difference
-    const timeLeft = midnightPacific - currentPacific;
-
-    // Calculate components
+    const now = new Date();
+    const nextRefresh = new Date();
+    nextRefresh.setDate(nextRefresh.getDate() + 1);
+    nextRefresh.setUTCHours(8, 0, 0, 0);
+    
+    const timeLeft = nextRefresh - now;
+    
     const hours = Math.floor(timeLeft / (1000 * 60 * 60));
     const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-
+    
     return {
       hours,
       minutes,
       seconds,
       total: timeLeft,
-      nextRefresh: midnightPacific,
+      nextRefresh
     };
   }
   async refreshShop() {
-    // Generate new shop name and inventory
     this.shopName = await this.generateShopName();
     this.currentInventory = await this.selectItemsByRarity();
   
-    // Get current time in Pacific timezone
-    const pacificTime = new Date().toLocaleString("en-US", {timeZone: "America/Los_Angeles"});
-    this.lastRefresh = new Date(pacificTime);
+    // Set current time as lastRefresh
+    this.lastRefresh = new Date();
   
-    // Calculate next refresh time (next midnight Pacific time)
-    const nextPacificMidnight = new Date(pacificTime);
-    nextPacificMidnight.setHours(24, 0, 0, 0);
-    this.nextRefresh = nextPacificMidnight;
+    // Create next midnight in Pacific time converted to UTC
+    this.nextRefresh = new Date();
+    // Set to next day at 08:00 UTC (00:00 Pacific)
+    this.nextRefresh.setDate(this.nextRefresh.getDate() + 1);
+    this.nextRefresh.setUTCHours(8, 0, 0, 0);
   
     return {
       shopName: this.shopName,
